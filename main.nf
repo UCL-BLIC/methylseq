@@ -338,13 +338,13 @@ if(params.notrim){
         tpc_r1 = params.three_prime_clip_r1 > 0 ? "--three_prime_clip_r1 ${params.three_prime_clip_r1}" : ''
         tpc_r2 = params.three_prime_clip_r2 > 0 ? "--three_prime_clip_r2 ${params.three_prime_clip_r2}" : ''
         rrbs = params.rrbs ? "--rrbs" : ''
-        if (params.singleEnd) {
+        if (params.singleEnd ) {
             """
-            trim_galore --fastqc --gzip $rrbs $c_r1 $tpc_r1 $reads
+            trim_galore -a AGATCGGAAGAGC $reads
             """
         } else {
             """
-            trim_galore --paired --fastqc --gzip $rrbs $c_r1 $c_r2 $tpc_r1 $tpc_r2 $reads
+           trim_galore --paired -a AGATCGGAAGAGC -a2 AAATCAAAAAAAC $reads
             """
         }
     }
