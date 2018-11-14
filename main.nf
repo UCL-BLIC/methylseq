@@ -328,7 +328,7 @@ if(params.notrim){
         set val(name), file(reads) from read_files_trimming
 
         output:
-        set val(name), file('*fq.gz') into trimmed_reads
+        set val(name), file('*fq') into trimmed_reads
         file "*trimming_report.txt" into trimgalore_results
         file "*_fastqc.{zip,html}" into trimgalore_fastqc_reports
 
@@ -349,6 +349,35 @@ if(params.notrim){
         }
     }
 }
+
+process trim_adaptor {
+       	tag "$name"
+       	publishDir "${params.outdir}/trim_galore", mode: 'copy',
+            saveAs: {filename ->
+               	if (filename.indexOf("_fastqc") > 0) "FastQC/$filename"
+               	else if (filename.indexOf("trimming_report.txt") > 0) "logs/$filename"
+               	else params.saveTrimmed ? filename : null
+            }
+
+       	input:
+       	set val(name), file(reads) from trimmed_reads
+
+       	output:
+       	set val(name), file('*fq') into adaptor_trimmed_reads
+
+	if (params.singleEnd ) {
+            """
+	    python trimRRBSdiversityAdaptCustomers.py -1 $reads
+            """
+       	} else {
+            """
+           python trimRRBSdiversityAdaptCustomers.py -1 ${reads[0]} -2 ${reads[1]}
+            """
+       	}
+}
+
+
+
 
 /*
  * STEP 3.1 - align with Bismark
