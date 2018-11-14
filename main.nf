@@ -397,7 +397,7 @@ if(params.aligner == 'bismark'){
         file index from bismark_index.collect()
 
         output:
-        file "*.bam" into bam, bam_2
+        file "*.sam" into sam, sam_2
         file "*report.txt" into bismark_align_log_1, bismark_align_log_2, bismark_align_log_3
         if(params.unmapped){ file "*.fq.gz" into bismark_unmapped }
 
@@ -433,14 +433,14 @@ if(params.aligner == 'bismark'){
         if (params.singleEnd) {
             """
             bismark \\
-                --bam $pbat $non_directional $unmapped $mismatches $multicore \\
+                --sam $pbat $non_directional $unmapped $mismatches $multicore \\
                 --genome $index \\
                 $reads
             """
         } else {
             """
             bismark \\
-                --bam $pbat $non_directional $unmapped $mismatches $multicore \\
+                --sam $pbat $non_directional $unmapped $mismatches $multicore \\
                 --genome $index \\
                 -1 ${reads[0]} \\
                 -2 ${reads[1]}
@@ -458,12 +458,12 @@ if(params.aligner == 'bismark'){
         bismark_dedup_log_3 = Channel.from(false)
     } else {
         process bismark_deduplicate {
-            tag "${bam.baseName}"
+            tag "$sam.baseName}"
             publishDir "${params.outdir}/bismark_deduplicated", mode: 'copy',
                 saveAs: {filename -> filename.indexOf(".bam") == -1 ? "logs/$filename" : "$filename"}
 
             input:
-            file bam
+            file sam
 
             output:
             file "${bam.baseName}.deduplicated.bam" into bam_dedup, bam_dedup_qualimap
@@ -472,11 +472,13 @@ if(params.aligner == 'bismark'){
             script:
             if (params.singleEnd) {
                 """
-                deduplicate_bismark -s --bam $bam
+		python nudup.py –f index.fq –o outputname $sam
+                //deduplicate_bismark -s --bam $bam
                 """
             } else {
                 """
-                deduplicate_bismark -p --bam $bam
+		python nudup.py –2 –f index.fq –o outputname $sam
+                //deduplicate_bismark -p --bam $bam
                 """
             }
         }
